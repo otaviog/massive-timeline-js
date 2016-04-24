@@ -1,0 +1,11 @@
+{
+    "name": "massive-timeline",
+    "version": "0.0.1",
+    "description": "A visualizer of timelines with large number of parallel events occurrences",
+    "private": true,
+    "devDependencies": {
+        "typescript": "^1.8.10",
+        "typings": "^0.7.9",
+        "three": "^0.75"
+  }
+}

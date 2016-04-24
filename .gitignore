@@ -1,0 +1,6 @@
+src/view/*.js
+tests/*.js
+*.js.map
+node_modules
+typings
+lib

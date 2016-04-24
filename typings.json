@@ -1,0 +1,5 @@
+{
+    "ambientDevDependencies": {
+        "three": "github:DefinitelyTyped/DefinitelyTyped/threejs/three.d.ts#2d448c0a3152e8871521848c5c2c61ab4e2a2cc9"
+    }
+}
