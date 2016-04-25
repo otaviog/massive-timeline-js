@@ -8,6 +8,9 @@ namespace MassiveTimeline {
         Years
     }
 
+    /**
+     * Draws a timeline
+     */
     export class TimeLine {
         currentDate : Date;
         viewDetail : LevelOfDetail;
