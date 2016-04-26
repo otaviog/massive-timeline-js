@@ -16,7 +16,7 @@ function mousemoveScene2(ev : MouseEvent) {
 function initScene2() {
     scene = new THREE.Scene();
 
-    mainloop = new MassiveTimeline.MainLoop();
+    mainloop = new MassiveTimeline.MainLoop(window.innerWidth, window.innerHeight);
     let dateLine = new MassiveTimeline.TimeLine(new Date(2013, 0, 1), new Date(2017, 0, 1));
     scene.add(dateLine.sceneObject);
     renderer = new THREE.WebGLRenderer();

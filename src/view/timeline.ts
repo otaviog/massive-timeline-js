@@ -1,4 +1,6 @@
 // <reference path="typings/three/three.d.ts" />
+/// <reference path="textsprite.ts" />
+// // <reference path="typings/angular-translate/angular-translate.d.ts"/>
 
 namespace MassiveTimeline {
     enum LevelOfDetail {
@@ -15,6 +17,10 @@ namespace MassiveTimeline {
         currentDate : Date;
         viewDetail : LevelOfDetail;
         sceneObject : THREE.Line;
+
+        daySprites : { [key:number]:TextSprite } = {};
+        monthSprites : { [key:number]:TextSprite } = {};
+        yearSprites : { [key:number]:TextSprite } = {};
 
         constructor(firstTime : Date, lastTime : Date) {
             var material = new THREE.LineBasicMaterial({
@@ -45,6 +51,22 @@ namespace MassiveTimeline {
             const dateDiff = lastTime.getTime() - firstTime.getTime();
 
 
+            for (var i=1; i<=31; i++) {
+                this.daySprites[i] = new MassiveTimeline.TextSprite(`${i}`, 0.0005);
+            }
+
+            const months: string[] = ["January", "February", "March",
+                                      "April", "May", "June", "July", "August",
+                                      "September", "November", "December"];
+
+            for (var i=1; i<=12; i++) {
+                this.monthSprites[i] = new MassiveTimeline.TextSprite(months[i-1], 0.05);
+            }
+
+            for (var i=firstTime.getFullYear(); i <= lastTime.getFullYear(); i++) {
+                this.yearSprites[i] = new TextSprite(`${i}`, 0.08);
+            }
+
             for (var day = firstTime.getTime();
                  day <= lastTime.getTime();
                  day += dayInMilliSeconds)
@@ -54,17 +76,37 @@ namespace MassiveTimeline {
                 const xpos = -1*(1 - t) + t;
 
                 if (dayDate.getMonth() == 0 && dayDate.getDate() == 1) {
-                    let object = new THREE.Line(vertLineGeoH1, material);
-                    object.translateX(xpos);
-                    this.sceneObject.add(object);
+                    let lineObject = new THREE.Line(vertLineGeoH1, material);
+                    lineObject.translateX(xpos);
+                    this.sceneObject.add(lineObject);
+
+                    let textInstance = this.yearSprites[dayDate.getFullYear()]
+                    let textSceneObject = new THREE.Mesh(
+                        textInstance.geometry, textInstance.material);
+                    textSceneObject.position.x = xpos;
+                    textSceneObject.position.y = 0.11;
+                    this.sceneObject.add(textSceneObject);
+
                 } else if (dayDate.getDate() == 1) {
                     let object = new THREE.Line(vertLineGeoH2, material);
                     object.translateX(xpos);
                     this.sceneObject.add(object);
+
+                    let textSceneObject = this.monthSprites[dayDate.getMonth()].createSceneObject();
+                    textSceneObject.position.x = xpos;
+                    textSceneObject.position.y = -0.11;
+                    textSceneObject.rotateZ(Math.PI/2);
+                    this.sceneObject.add(textSceneObject);
+
                 } else {
                     let object = new THREE.Line(vertLineGeoH3, material);
                     object.translateX(xpos);
                     this.sceneObject.add(object);
+
+                    let textSceneObject = this.daySprites[dayDate.getDate()].createSceneObject();
+                    textSceneObject.position.x = xpos;
+
+                    this.sceneObject.add(textSceneObject);
                 }
 
             }

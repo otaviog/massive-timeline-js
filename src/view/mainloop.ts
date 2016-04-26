@@ -10,20 +10,38 @@ namespace MassiveTimeline {
         speed : number;
         camera : THREE.OrthographicCamera;
 
+        width : number;
+        height : number;
+
         state : ControlStates;
         panMousePos : THREE.Vector2;
         panPosition : THREE.Vector2;
 
-        constructor() {
+        constructor(width, height) {
+            this.width = width;
+            this.height = height;
+
             this.state = ControlStates.VIEW;
             this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1);
             this.speed = 0.1;
         }
 
+        convertMousePositionToCameraSpace(event : MouseEvent) {
+            const orthoWidth = this.camera.right - this.camera.left;
+            const orthoHeight = this.camera.top - this.camera.bottom;
+
+            const x = this.camera.position.x
+                + (event.clientX/this.width)*orthoWidth - this.camera.left;
+            const y = this.camera.position.y
+                + (event.clientY/this.height)*orthoHeight - this.camera.bottom;
+
+            return new THREE.Vector2(x, y)
+        }
+
         mouseDown(event : MouseEvent) {
             if (event.button == THREE.MOUSE.LEFT) {
                 this.state = ControlStates.PAN;
-                this.panMousePos = new THREE.Vector2(event.clientX, event.clientY);
+                this.panMousePos = this.convertMousePositionToCameraSpace(event);
                 this.panPosition = new THREE.Vector2(this.camera.position.x,
                                                      this.camera.position.y);
             }
@@ -35,20 +53,10 @@ namespace MassiveTimeline {
 
         mouseMove(event : MouseEvent) {
             if (this.state == ControlStates.PAN) {
-                const mousePos = new THREE.Vector2(event.clientX, event.clientY);
+                const xmov = -event.movementX/this.width;
+                const ymov = event.movementY/this.height;
 
-                const worldScale = new THREE.Vector2(2/908, 2/556);
-                const t1 = mousePos.multiplyScalar(worldScale.x);
-                const t2 = this.panMousePos.multiplyScalar(worldScale.x);
-
-                //const diff = mousePos.sub(this.panMousePos);
-                const diff = t1.sub(t2);
-
-                const nx = this.panPosition.x - diff.x;
-
-                this.camera.position.x = nx;
-                console.log(nx);
-
+                this.camera.position.x = THREE.Math.clamp(this.camera.position.x + xmov, -1, 1);
             }
         }
 
