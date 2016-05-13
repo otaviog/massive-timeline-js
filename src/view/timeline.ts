@@ -1,28 +1,34 @@
 // <reference path="typings/three/three.d.ts" />
 /// <reference path="textsprite.ts" />
+/// <reference path="mainloop.ts" />
 // // <reference path="typings/angular-translate/angular-translate.d.ts"/>
 
 namespace MassiveTimeline {
-    enum LevelOfDetail {
+    export enum LevelOfDetail {
         Days = 1,
         Weeks,
         Months,
         Years
     }
 
+
     /**
      * Draws a timeline
      */
     export class TimeLine {
         currentDate : Date;
-        viewDetail : LevelOfDetail;
+        currentLOD : LevelOfDetail;
         sceneObject : THREE.Line;
+
+        _yearObjects : MassiveTimeline.TextObject[] = [];
+        _monthObjects : MassiveTimeline.TextObject[] = [];
+        _dayObjects : MassiveTimeline.TextObject[] = [];
 
         daySprites : { [key:number]:TextSprite } = {};
         monthSprites : { [key:number]:TextSprite } = {};
         yearSprites : { [key:number]:TextSprite } = {};
 
-        constructor(firstTime : Date, lastTime : Date) {
+        constructor(context : MassiveTimeline.MainLoop, firstTime : Date, lastTime : Date) {
             var material = new THREE.LineBasicMaterial({
                 color: 0xffffff
             });
@@ -49,10 +55,11 @@ namespace MassiveTimeline {
 
             const dayInMilliSeconds = 1000*60*60*24;
             const dateDiff = lastTime.getTime() - firstTime.getTime();
-
+            const dayStep = 1/365;
 
             for (var i=1; i<=31; i++) {
-                this.daySprites[i] = new MassiveTimeline.TextSprite(`${i}`, 0.0005);
+                this.daySprites[i] = new MassiveTimeline.TextSprite(`${i}`, 14,
+                                                                    "Times New Roman");
             }
 
             const months: string[] = ["January", "February", "March",
@@ -60,20 +67,22 @@ namespace MassiveTimeline {
                                       "September", "November", "December"];
 
             for (var i=1; i<=12; i++) {
-                this.monthSprites[i] = new MassiveTimeline.TextSprite(months[i-1], 0.05);
+                this.monthSprites[i] = new MassiveTimeline.TextSprite(
+                    months[i-1], 18, "Times New Roman");
             }
 
             for (var i=firstTime.getFullYear(); i <= lastTime.getFullYear(); i++) {
-                this.yearSprites[i] = new TextSprite(`${i}`, 0.08);
+                this.yearSprites[i] = new TextSprite(`${i}`, 24, "Times New Roman");
             }
 
+            var nthDay = 0;
             for (var day = firstTime.getTime();
                  day <= lastTime.getTime();
-                 day += dayInMilliSeconds)
+                 day += dayInMilliSeconds,
+                 nthDay += 1)
             {
                 const dayDate = new Date(day);
-                const t = (day - firstTime.getTime())/dateDiff;
-                const xpos = -1*(1 - t) + t;
+                const xpos = nthDay*dayStep - 1;
 
                 if (dayDate.getMonth() == 0 && dayDate.getDate() == 1) {
                     let lineObject = new THREE.Line(vertLineGeoH1, material);
@@ -81,21 +90,26 @@ namespace MassiveTimeline {
                     this.sceneObject.add(lineObject);
 
                     let textInstance = this.yearSprites[dayDate.getFullYear()]
-                    let textSceneObject = new THREE.Mesh(
-                        textInstance.geometry, textInstance.material);
+                    let textSceneObject = textInstance.createSceneObject(context);
                     textSceneObject.position.x = xpos;
                     textSceneObject.position.y = 0.11;
+                    this._yearObjects.push(textSceneObject);
                     this.sceneObject.add(textSceneObject);
-
                 } else if (dayDate.getDate() == 1) {
                     let object = new THREE.Line(vertLineGeoH2, material);
                     object.translateX(xpos);
                     this.sceneObject.add(object);
 
-                    let textSceneObject = this.monthSprites[dayDate.getMonth()].createSceneObject();
+                    let sprite = this.monthSprites[dayDate.getMonth()]
+                    let textSceneObject = sprite
+                        .createSceneObject(context);
+                    textSceneObject.scaleUpdate = function(self : MassiveTimeline.TextObject) {
+                        textSceneObject.position.y = -self.width/2 - 0.01;
+                    }
+
                     textSceneObject.position.x = xpos;
-                    textSceneObject.position.y = -0.11;
                     textSceneObject.rotateZ(Math.PI/2);
+                    this._monthObjects.push(textSceneObject);
                     this.sceneObject.add(textSceneObject);
 
                 } else {
@@ -103,35 +117,49 @@ namespace MassiveTimeline {
                     object.translateX(xpos);
                     this.sceneObject.add(object);
 
-                    let textSceneObject = this.daySprites[dayDate.getDate()].createSceneObject();
+                    let textSceneObject = this.daySprites[dayDate.getDate()]
+                        .createSceneObject(context);
                     textSceneObject.position.x = xpos;
+                    textSceneObject.position.y = -0.001;
+                    this._dayObjects.push(textSceneObject);
 
                     this.sceneObject.add(textSceneObject);
                 }
-
             }
 
-
-            // var N = 4;
-            // for (var i = 0; i<=N; ++i) {
-            //     let object = new THREE.Line(vertLineGeoH1, material);
-            //     const t = i/N;
-            //     const xpos = -1*(1 - t) + t;
-            //     object.translateX(xpos);
-            //     this.sceneObject.add(object);
-
-            //     let date = resolveDate(xpos, new Date(2016, 4, 24),
-            //                            convertMonthLengthToMilliseconds(4));
-
-            //     let dateSprite = new DateSprite(
-            //         `${date.getMonth() + 1}/${date.getFullYear()}`,
-            //         0.2);
-            //     dateSprite.sceneObject.translateX(xpos);
-            //     dateSprite.sceneObject.translateY(-0.15);
-            //     //dateSprite.sceneObject.rotateZ(Math.PI/2);
-            //     this.sceneObject.add(dateSprite.sceneObject);
-            // }
+            this.currentLOD = LevelOfDetail.Days;
         }
-    }
 
-}
+        setLOD(lod : LevelOfDetail) {
+            if (this.currentLOD == lod) {
+                return ;
+            }
+            this.currentLOD = lod;
+            var monthOn : boolean;
+            var dayOn : boolean;
+
+            if (lod == LevelOfDetail.Years) {
+                monthOn = false;
+                dayOn = false;
+            } else if (lod == LevelOfDetail.Months) {
+                monthOn = true;
+                dayOn = false;
+            } else if (lod == LevelOfDetail.Days) {
+                monthOn = true;
+                dayOn = true;
+            }
+
+            for (var i = 0; i<this._monthObjects.length; i++) {
+                this._monthObjects[i].visible = monthOn;
+            }
+
+            for (var i = 0; i<this._dayObjects.length; i++) {
+                this._dayObjects[i].visible = dayOn;
+            }
+        }
+
+        addEvent(event : Event) {
+            this.sceneObject.add(new EventObject(event));
+        }
+    } // TimeLine
+} // MassiveTimeline

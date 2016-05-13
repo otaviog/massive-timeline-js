@@ -1,6 +1,8 @@
 {
     "ambientDevDependencies": {
         "three": "github:DefinitelyTyped/DefinitelyTyped/threejs/three.d.ts#2d448c0a3152e8871521848c5c2c61ab4e2a2cc9",
-        "angular-translate": "github:DefinitelyTyped/DefinitelyTyped/angular-translate/angular-translate.d.ts#2d448c0a3152e8871521848c5c2c61ab4e2a2cc9"
+        "angular-translate": "github:DefinitelyTyped/DefinitelyTyped/angular-translate/angular-translate.d.ts#2d448c0a3152e8871521848c5c2c61ab4e2a2cc9",
+        "webgl-ext": "github:DefinitelyTyped/DefinitelyTyped/webgl-ext/webgl-ext.d.ts#2d448c0a3152e8871521848c5c2c61ab4e2a2cc9",
+        "gl-matrix": "github:DefinitelyTyped/DefinitelyTyped/gl-matrix/gl-matrix.d.ts#2d448c0a3152e8871521848c5c2c61ab4e2a2cc9"
     }
 }
