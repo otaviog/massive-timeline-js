@@ -26,6 +26,12 @@ Install typings globally:
 $ sudo npm -g install typings
 ```
 
+Get typings
+
+```Shell
+$ typings install
+```
+
 ## Building
 
 ```
