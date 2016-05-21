@@ -107,7 +107,7 @@ namespace MassiveTimeline {
                     let sprite = this.monthSprites[dayDate.getMonth()];
                     let textSceneObject = sprite
                         .createSceneObject(context);
-                    textSceneObject.scaleUpdate = function(self: MassiveTimeline.TextObject) {
+                    textSceneObject.scaleUpdate = function (self: MassiveTimeline.TextObject) {
                         textSceneObject.position.y = -self.width / 2 - 0.01;
                     };
 

@@ -37,7 +37,6 @@ namespace MassiveTimeline {
 
             const width = (this._canvas_dim.x / screen_space_dim.x) * camera_space_dim.x;
             const height = (this._canvas_dim.y / screen_space_dim.y) * camera_space_dim.y;
-
             this.scale.x = width;
             this.scale.y = height;
 

@@ -1,24 +1,14 @@
 // <reference path="typings/three/three.d.ts" />
-/// <reference path="../src/view/timeline.ts" />
-/// <reference path="../src/view/mainloop.ts" />
-/// <reference path="../src/view/event.ts" />
+/// <reference path="../src//timeline.ts" />
+/// <reference path="../src/mainloop.ts" />
+/// <reference path="../src/event.ts" />
 
 var scene: THREE.Scene;
 var renderer: THREE.Renderer;
 var mainloop: MassiveTimeline.MainLoop;
 
-function mousewheelScene2(ev: MouseWheelEvent) {
-
-}
-
-function mousemoveScene2(ev: MouseEvent) {
-}
-
-function initScene2() {
+function initTimeline1() {
     scene = new THREE.Scene();
-
-    console.log(window.innerWidth);
-    console.log(window.innerHeight);
 
     mainloop = new MassiveTimeline.MainLoop(
         new THREE.Vector2(window.innerWidth, window.innerHeight));
@@ -37,19 +27,29 @@ function initScene2() {
         0xff0000
     ));
 
+    mainloop.timeline.addEvent(new MassiveTimeline.Event(
+        new Date(2013, 10, 12),
+        new Date(2014, 3, 24),
+        "Testing 2", "",
+        0x00ff00
+    ));
+
     mainloop.scene.add(mainloop.timeline.sceneObject);
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     document.body.appendChild(renderer.domElement);
-    document.body.addEventListener("mousewheel", function (ev) { mainloop.mouseWheel(ev); }, true);
-    document.body.addEventListener("mousemove", function (ev) { mainloop.mouseMove(ev); }, true);
-    document.body.addEventListener("mousedown", function (ev) { mainloop.mouseDown(ev); }, true);
-    document.body.addEventListener("mouseup", function (ev) { mainloop.mouseUp(ev); }, true);
+    document.body.addEventListener("mousewheel", function(ev) { mainloop.mouseWheel(ev); }, true);
+    document.body.addEventListener("mousemove", function(ev) { mainloop.mouseMove(ev); }, true);
+    document.body.addEventListener("mousedown", function(ev) { mainloop.mouseDown(ev); }, true);
+    document.body.addEventListener("mouseup", function(ev) { mainloop.mouseUp(ev); }, true);
 }
 
-function animateScene2() {
-    requestAnimationFrame(animateScene2);
+function animateTimeline1() {
+    requestAnimationFrame(animateTimeline1);
     mainloop.update();
     renderer.render(mainloop.scene, mainloop.camera);
 }
+
+initTimeline1();
+animateTimeline1();

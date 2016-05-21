@@ -109,7 +109,7 @@ namespace MassiveTimeline {
             }
             this.camera.updateProjectionMatrix();
 
-            var lod = LevelOfDetail.Days;
+            let lod = LevelOfDetail.Days;
 
             if (value > 1.9) {
                 lod = LevelOfDetail.Days;
@@ -124,7 +124,7 @@ namespace MassiveTimeline {
         }
 
         update() {
-            this.scene.traverse(function(obj) {
+            this.scene.traverse(function (obj) {
                 if (obj instanceof MassiveTimeline.TextObject) {
                     obj.updateScale();
 

@@ -1,6 +1,6 @@
 // <reference path="typings/three/three.d.ts" />
-/// <reference path="../src/view/textsprite.ts" />
-/// <reference path="../src/view/mainloop.ts" />
+/// <reference path="../src/textsprite.ts" />
+/// <reference path="../src/mainloop.ts" />
 
 var camera: THREE.Camera;
 var scene: THREE.Scene;
