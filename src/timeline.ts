@@ -1,7 +1,6 @@
 // <reference path="typings/three/three.d.ts" />
 /// <reference path="textsprite.ts" />
 /// <reference path="mainloop.ts" />
-// // <reference path="typings/angular-translate/angular-translate.d.ts"/>
 
 namespace MassiveTimeline {
     export enum LevelOfDetail {
@@ -25,20 +24,27 @@ namespace MassiveTimeline {
         _dayObjects: MassiveTimeline.TextObject[] = [];
 
         _firstTime: Date;
+        _lastTime: Date;
 
         daySprites: { [key: number]: TextSprite } = {};
         monthSprites: { [key: number]: TextSprite } = {};
         yearSprites: { [key: number]: TextSprite } = {};
+
+        get spaceDim(): THREE.Vector2 {
+            const startX = this.convertDateToXPos(this._firstTime);
+            const endX = this.convertDateToXPos(this._lastTime);
+            return new THREE.Vector2(
+                endX - startX,
+                this._events.length*timespace.EventObjectHeight);
+        }
 
         constructor(context: MassiveTimeline.MainLoop, firstTime: Date, lastTime: Date) {
             let material = new THREE.LineBasicMaterial({
                 color: 0xffffff
             });
 
-            firstTime = new Date(2013, 0, 1);
-            lastTime = new Date(2017, 0, 1);
-
             this._firstTime = firstTime;
+            this._lastTime = lastTime;
 
             material.linewidth = 2;
             let hozLineGeo = new THREE.Geometry();

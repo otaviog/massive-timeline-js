@@ -18,7 +18,7 @@ namespace MassiveTimeline {
             //console.log(event.color.getHex());
 
             this.position.x = startXPos + xHalfLength;
-            this.position.y = 0.1 + ynth * 0.01;
+            this.position.y = 0.1 + ynth * timespace.EventObjectHeight;
         }
 
         private static _getEventLength(event: Event) {

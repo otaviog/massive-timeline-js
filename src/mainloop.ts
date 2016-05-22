@@ -34,7 +34,6 @@ namespace MassiveTimeline {
             this._screen_space_dim = screen_space_dim;
 
             this.state = ControlStates.VIEW;
-            // this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1);
             this.camera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, -1, 1);
             this.speed = 0.1;
         }
@@ -68,9 +67,12 @@ namespace MassiveTimeline {
             if (this.state == ControlStates.PAN) {
                 const xmov = -event.movementX / this._screen_space_dim.x;
                 const ymov = event.movementY / this._screen_space_dim.y;
+                const timelineDim = this.timeline.spaceDim;
 
-                this.camera.position.x = THREE.Math.clamp(this.camera.position.x + xmov, -1, 5);
-                this.camera.position.y = THREE.Math.clamp(this.camera.position.y + ymov, -1, 1);
+                this.camera.position.x = THREE.Math.clamp(this.camera.position.x + xmov,
+                                                          -1, timelineDim.x);
+                this.camera.position.y = THREE.Math.clamp(this.camera.position.y + ymov,
+                                                          -1, timelineDim.y);
             }
         }
 
@@ -84,7 +86,7 @@ namespace MassiveTimeline {
         }
 
         setZoom(value: number) {
-            if (value < 0.05 || value > 1.98) {
+            if (value < 0.005 || value > 1.9999) {
                 return;
             }
             this._currentZoom = value;
@@ -119,7 +121,6 @@ namespace MassiveTimeline {
                 lod = LevelOfDetail.Years;
             }
 
-            console.log(value);
             this.timeline.setLOD(lod);
         }
 
