@@ -5,15 +5,21 @@
 
 namespace MassiveTimeline {
     export class EventObject extends THREE.Mesh {
+        private static createMaterial(event: Event) {
+            let material = new THREE.MeshBasicMaterial({
+                color: event.color,
+            })
+            material.depthTest = false;
+            return material;
+        }
+
         constructor(event: Event, ynth: number, parent_timeline: TimeLine) {
             const startXPos = parent_timeline.convertDateToXPos(event.startDate);
             const endXPos = parent_timeline.convertDateToXPos(event.endDate);
             const xHalfLength = (endXPos - startXPos) * 0.5;
             super(new THREE.PlaneGeometry(
-                xHalfLength, 0.01),
-                new THREE.MeshBasicMaterial({
-                    color: event.color
-                }));
+                xHalfLength, timespace.EventObjectHeight),
+                  EventObject.createMaterial(event));
             //console.log(event.color.getHexString());
             //console.log(event.color.getHex());
 

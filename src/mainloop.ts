@@ -7,113 +7,162 @@ namespace MassiveTimeline {
         PAN
     }
 
+    /**
+     *
+     */
     export class MainLoop {
-        lastUpdate: number;
-        speed: number;
-        camera: THREE.OrthographicCamera;
-        scene = new THREE.Scene();
-        timeline: MassiveTimeline.TimeLine;
+        private _renderer: THREE.Renderer;
+        private _camera: THREE.OrthographicCamera;
+        private _scene = new THREE.Scene();
+        private _timeline: MassiveTimeline.TimeLine;
 
         private _currentZoom = 1;
 
-        _screen_space_dim: THREE.Vector2;
-        get screen_space_dim(): THREE.Vector2 {
+        private _screen_space_dim: THREE.Vector2;
+
+        /**
+         * Returns the canvas dimension in pixels.
+         */
+        public get screen_space_dim(): THREE.Vector2 {
             return this._screen_space_dim;
         }
 
-        get camera_space_dim(): THREE.Vector2 {
-            return new THREE.Vector2(this.camera.right - this.camera.left,
-                this.camera.top - this.camera.bottom);
+        /**
+         * Returns the current camera's view dimension in world space.
+         */
+        public get camera_space_dim(): THREE.Vector2 {
+            return new THREE.Vector2((this._camera.right - this._camera.left)*this._currentZoom,
+                                     (this._camera.top - this._camera.bottom)*this._currentZoom);
         }
 
-        state: ControlStates;
-        panMousePos: THREE.Vector2;
-        panPosition: THREE.Vector2;
+        private _state: ControlStates;
 
-        constructor(screen_space_dim: THREE.Vector2) {
+        /**
+         * Returns the domElement that the timeline is being rendered.
+         * Use this to insert the timeline on the webpage.
+         */
+        public get domElement(): HTMLCanvasElement {
+            return this._renderer.domElement;
+        }
+
+        /**
+         * @param screen_space_dim the canvas dimension in pixels
+         * @param firstTime the starting date of the timeline
+         * @param lastTime the end date of the timeline.
+         */
+        constructor(screen_space_dim: THREE.Vector2,
+                    firstTime: Date, lastTime: Date) {
             this._screen_space_dim = screen_space_dim;
+            this._state = ControlStates.VIEW;
 
-            this.state = ControlStates.VIEW;
-            this.camera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, -1, 1);
-            this.speed = 0.1;
+            this._camera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 1000, 1001);
+            this._renderer = new THREE.WebGLRenderer();
+            this._renderer.setSize(screen_space_dim.x, screen_space_dim.y);
+
+            this._timeline = new MassiveTimeline.TimeLine(this, firstTime, lastTime);
+            this._scene.translateZ(-1000);
+            this._scene.add(this._timeline);
         }
 
-        convertMousePositionToCameraSpace(event: MouseEvent) {
-            const orthoWidth = this.camera.right - this.camera.left;
-            const orthoHeight = this.camera.top - this.camera.bottom;
+        private convertMousePositionToCameraSpace(event: MouseEvent) {
+            const orthoWidth = this._camera.right - this._camera.left;
+            const orthoHeight = this._camera.top - this._camera.bottom;
 
-            const x = this.camera.position.x
-                + (event.clientX / this._screen_space_dim.x) * orthoWidth - this.camera.left;
-            const y = this.camera.position.y
-                + (event.clientY / this._screen_space_dim.y) * orthoHeight - this.camera.bottom;
+            const x = this._camera.position.x
+                + (event.clientX / this._screen_space_dim.x) * orthoWidth - this._camera.left;
+            const y = this._camera.position.y
+                + (event.clientY / this._screen_space_dim.y) * orthoHeight - this._camera.bottom;
 
             return new THREE.Vector2(x, y);
         }
 
-        mouseDown(event: MouseEvent) {
+        public render() {
+            this.update();
+            this._renderer.render(this._scene, this._camera);
+        }
+
+        /**
+         * Handles mouse down event updating the timeline iteraction.
+         * @param event mouse event from document.body.addEventListener
+         */
+        public mouseDown(event: MouseEvent) {
             if (event.button === THREE.MOUSE.LEFT) {
-                this.state = ControlStates.PAN;
-                this.panMousePos = this.convertMousePositionToCameraSpace(event);
-                this.panPosition = new THREE.Vector2(this.camera.position.x,
-                    this.camera.position.y);
+                this._state = ControlStates.PAN;
+                requestAnimationFrame(() => { this.render(); });
             }
         }
 
-        mouseUp(event: MouseEvent) {
-            this.state = ControlStates.VIEW;
+        /**
+         * Handles mouse up event updating the timeline iteraction.
+         * @param event mouse event from document.body.addEventListener
+         */
+        public mouseUp(event: MouseEvent) {
+            this._state = ControlStates.VIEW;
+            requestAnimationFrame(() => { this.render(); });
         }
 
-        mouseMove(event: MouseEvent) {
-            if (this.state == ControlStates.PAN) {
+        /**
+         * Handles mouse move event updating the timeline iteraction.
+         * @param event mouse event from document.body.addEventListener
+         */
+        public mouseMove(event: MouseEvent) {
+            if (this._state == ControlStates.PAN) {
                 const xmov = -event.movementX / this._screen_space_dim.x;
                 const ymov = event.movementY / this._screen_space_dim.y;
-                const timelineDim = this.timeline.spaceDim;
+                const timelineDim = this._timeline.spaceDim;
 
-                this.camera.position.x = THREE.Math.clamp(this.camera.position.x + xmov,
+                this._camera.position.x = THREE.Math.clamp(this._camera.position.x + xmov,
                                                           -1, timelineDim.x);
-                this.camera.position.y = THREE.Math.clamp(this.camera.position.y + ymov,
+                this._camera.position.y = THREE.Math.clamp(this._camera.position.y + ymov,
                                                           -1, timelineDim.y);
+                event.preventDefault();
+                requestAnimationFrame(() => { this.render(); });
             }
         }
 
-        mouseWheel(event: MouseWheelEvent) {
-            const delta = 0.05;
+        /**
+         * Handles mouse wheel event updating the timeline iteraction.
+         * @param event mouse event from document.body.addEventListener
+         */
+        public mouseWheel(event: MouseWheelEvent) {
+            const delta = 0.005;
+            console.log(event.clientX);
+            let mx = (event.clientX / this.domElement.width) * 2 - 1;
+            let my = -(event.clientY / this.domElement.height) * 2 + 1;
+            console.log('X: ' + mx + ' Y: ' + my);
+
+            mx = (this.camera_space_dim.x*0.5)*mx;
+            my = (this.camera_space_dim.y*0.5)*my;
+            console.log('mX: ' + mx + ' mY: ' + my);
+
+            console.log('cX: ' + this._camera.position.x + 'cY: ' + this._camera.position.y);
             if (event.wheelDelta > 0) {
                 this.setZoom(this._currentZoom + delta);
-            } else if (this.camera.right - this.camera.left < 10) {
+            } else if (this._camera.right - this._camera.left < 10) {
                 this.setZoom(this._currentZoom - delta);
             }
+            //this._camera.position.x -= mx;
+            //this._camera.position.y -= my;
+
+            requestAnimationFrame(() => { this.render(); });
         }
 
-        setZoom(value: number) {
-            if (value < 0.005 || value > 1.9999) {
-                return;
-            }
-            this._currentZoom = value;
+        /**
+         * Sets the zoom of the timeline viewer.
+         * @param value zoom value. 1 means no scale, smaller values means zoom out and bigger values means zoom in.
+         */
+        public setZoom(value: number) {
+            console.log(value);
+            if (value < 0.000005)
+                return ;
 
-            if (value > 1) {
-                const delta = value - 1;
-                this.camera.left = -1 + delta;
-                this.camera.right = 1 - delta;
-                this.camera.top = 1 - delta;
-                this.camera.bottom = -1 + delta;
-            } else if (value < 1) {
-                const delta = 1 - value;
-                this.camera.left = -1 - delta;
-                this.camera.right = 1 + delta;
-                this.camera.top = 1 + delta;
-                this.camera.bottom = -1 - delta;
-            } else {
-                this.camera.left = -1;
-                this.camera.right = 1;
-                this.camera.bottom = -1;
-                this.camera.top = 1;
-            }
-            this.camera.updateProjectionMatrix();
+            this._scene.scale.x = value;
+            this._scene.scale.y = value;
+            this._currentZoom = value;
 
             let lod = LevelOfDetail.Days;
 
-            if (value > 1.9) {
+            if (value > 2) {
                 lod = LevelOfDetail.Days;
             } else if (value > 1.0) {
                 lod = LevelOfDetail.Months;
@@ -121,17 +170,19 @@ namespace MassiveTimeline {
                 lod = LevelOfDetail.Years;
             }
 
-            this.timeline.setLOD(lod);
+            this._timeline.setLOD(lod);
         }
 
-        update() {
-            this.scene.traverse(function (obj) {
+        public addEvent(event: Event) {
+            this._timeline.addEvent(event);
+        }
+
+        private update() {
+            this._scene.traverse(function (obj) {
                 if (obj instanceof MassiveTimeline.TextObject) {
                     obj.updateScale();
-
                 }
             });
-
         }
     }
 }

@@ -30,7 +30,6 @@ namespace MassiveTimeline {
             this.updateScale();
         }
 
-
         updateScale() {
             const screen_space_dim = this._tlContext.screen_space_dim;
             const camera_space_dim = this._tlContext.camera_space_dim;
@@ -80,7 +79,7 @@ namespace MassiveTimeline {
             let texture = new THREE.Texture(canvas);
             texture.needsUpdate = true;
             texture.minFilter = THREE.LinearFilter;
-            this.material = new THREE.MeshBasicMaterial({
+            this.material = new THREE.MeshBasicMaterial({
                 map: texture,
                 side: THREE.DoubleSide,
                 color: 0xffffffff

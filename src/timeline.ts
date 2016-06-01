@@ -3,34 +3,45 @@
 /// <reference path="mainloop.ts" />
 
 namespace MassiveTimeline {
+    /**
+     * Defines the level of detail to view the timeline.
+     */
     export enum LevelOfDetail {
-        Days = 1,
-        Weeks,
-        Months,
-        Years
+        Days = 1, /*< Shows years, months and days*/
+        Months, /*< Shows years and months and days. */
+        Years /*< Shows only years. */
     }
 
     /**
-     * Draws a timeline
+     * Timeline main scene's object. Has the timeline drawing logic.
      */
-    export class TimeLine {
-        currentDate: Date;
-        currentLOD: LevelOfDetail;
-        _events: EventObject[] = [];
-        sceneObject: THREE.Line;
+    export class TimeLine extends THREE.Line {
+        private _currentDate: Date;
+        public get currentDate(): Date { return this._currentDate; }
 
-        _yearObjects: MassiveTimeline.TextObject[] = [];
-        _monthObjects: MassiveTimeline.TextObject[] = [];
-        _dayObjects: MassiveTimeline.TextObject[] = [];
+        private _currentLOD: LevelOfDetail;
+        public get currentLOD() : LevelOfDetail { return this._currentLOD; }
 
-        _firstTime: Date;
-        _lastTime: Date;
+        private _events: EventObject[] = [];
 
-        daySprites: { [key: number]: TextSprite } = {};
-        monthSprites: { [key: number]: TextSprite } = {};
-        yearSprites: { [key: number]: TextSprite } = {};
+        private _yearObjects: MassiveTimeline.TextObject[] = [];
+        private _monthObjects: MassiveTimeline.TextObject[] = [];
+        private _dayObjects: MassiveTimeline.TextObject[] = [];
 
-        get spaceDim(): THREE.Vector2 {
+        private _firstTime: Date;
+        public get firstTime() : Date { return this._firstTime; }
+
+        private _lastTime: Date;
+        public get lastTime() : Date { return this._lastTime; }
+
+        private _daySprites: { [key: number]: TextSprite } = {};
+        private _monthSprites: { [key: number]: TextSprite } = {};
+        private _yearSprites: { [key: number]: TextSprite } = {};
+
+        /**
+         * Returns the dimension (size) of the timeline in world scene units.
+         */
+        public get spaceDim(): THREE.Vector2 {
             const startX = this.convertDateToXPos(this._firstTime);
             const endX = this.convertDateToXPos(this._lastTime);
             return new THREE.Vector2(
@@ -38,20 +49,34 @@ namespace MassiveTimeline {
                 this._events.length*timespace.EventObjectHeight);
         }
 
+        private static _createHozLineGeo(firstTime:Date, lastTime:Date) {
+            let hozLineGeo = new THREE.Geometry();
+            hozLineGeo.vertices.push(new THREE.Vector3(-1, 0, 0),
+                                     new THREE.Vector3(
+                                         timespace.measureDateSpaceDistance(firstTime, lastTime),
+                                         0, 0));
+            return hozLineGeo;
+        }
+
+        /**
+         * Generates the timeline base geometry. Its also creates resources such canvas and cache them.
+         * @param context
+         */
         constructor(context: MassiveTimeline.MainLoop, firstTime: Date, lastTime: Date) {
+            super(
+                TimeLine._createHozLineGeo(firstTime, lastTime), new THREE.LineBasicMaterial({
+                    color: 0xffffff,
+                    linewidth: 2
+                }));
+
             let material = new THREE.LineBasicMaterial({
-                color: 0xffffff
+                color: 0xffffff,
+                linewidth: 2
             });
+
 
             this._firstTime = firstTime;
             this._lastTime = lastTime;
-
-            material.linewidth = 2;
-            let hozLineGeo = new THREE.Geometry();
-            hozLineGeo.vertices.push(new THREE.Vector3(-1, 0, 0),
-                new THREE.Vector3(1, 0, 0));
-
-            this.sceneObject = new THREE.Line(hozLineGeo, material);
 
             let vertLineGeoH1 = new THREE.Geometry();
             vertLineGeoH1.vertices.push(new THREE.Vector3(0, 0, 0),
@@ -67,7 +92,7 @@ namespace MassiveTimeline {
             const dateDiff = lastTime.getTime() - firstTime.getTime();
 
             for (let i = 1; i <= 31; i++) {
-                this.daySprites[i] = new MassiveTimeline.TextSprite(`${i}`, 14,
+                this._daySprites[i] = new MassiveTimeline.TextSprite(`${i}`, 14,
                     "Times New Roman");
             }
 
@@ -76,16 +101,16 @@ namespace MassiveTimeline {
                 "September", "November", "December"];
 
             for (let i = 1; i <= 12; i++) {
-                this.monthSprites[i] = new MassiveTimeline.TextSprite(
+                this._monthSprites[i] = new MassiveTimeline.TextSprite(
                     months[i - 1], 18, "Times New Roman");
             }
 
             for (let i = firstTime.getFullYear(); i <= lastTime.getFullYear(); i++) {
-                this.yearSprites[i] = new TextSprite(`${i}`, 24, "Times New Roman");
+                this._yearSprites[i] = new TextSprite(`${i}`, 24, "Times New Roman");
             }
 
-            const dayInMilliSeconds = 1000 * 60 * 60 * 24;
-            const dayStep = 1 / 365;
+            const dayInMilliSeconds = timespace.DayInMilliSeconds;
+            const dayStep = timespace.DayLengthInSpace;
             let nthDay = 0;
             for (let day = firstTime.getTime();
                 day <= lastTime.getTime();
@@ -97,20 +122,20 @@ namespace MassiveTimeline {
                 if (dayDate.getMonth() === 0 && dayDate.getDate() === 1) {
                     let lineObject = new THREE.Line(vertLineGeoH1, material);
                     lineObject.translateX(xpos);
-                    this.sceneObject.add(lineObject);
+                    this.add(lineObject);
 
-                    let textInstance = this.yearSprites[dayDate.getFullYear()];
+                    let textInstance = this._yearSprites[dayDate.getFullYear()];
                     let textSceneObject = textInstance.createSceneObject(context);
                     textSceneObject.position.x = xpos;
                     textSceneObject.position.y = 0.11;
                     this._yearObjects.push(textSceneObject);
-                    this.sceneObject.add(textSceneObject);
+                    this.add(textSceneObject);
                 } else if (dayDate.getDate() === 1) {
                     let object = new THREE.Line(vertLineGeoH2, material);
                     object.translateX(xpos);
-                    this.sceneObject.add(object);
+                    this.add(object);
 
-                    let sprite = this.monthSprites[dayDate.getMonth()];
+                    let sprite = this._monthSprites[dayDate.getMonth()];
                     let textSceneObject = sprite
                         .createSceneObject(context);
                     textSceneObject.scaleUpdate = function (self: MassiveTimeline.TextObject) {
@@ -120,27 +145,27 @@ namespace MassiveTimeline {
                     textSceneObject.position.x = xpos;
                     textSceneObject.rotateZ(Math.PI / 2);
                     this._monthObjects.push(textSceneObject);
-                    this.sceneObject.add(textSceneObject);
+                    this.add(textSceneObject);
 
                 } else {
                     let object = new THREE.Line(vertLineGeoH3, material);
                     object.translateX(xpos);
-                    this.sceneObject.add(object);
+                    this.add(object);
 
-                    let textSceneObject = this.daySprites[dayDate.getDate()]
+                    let textSceneObject = this._daySprites[dayDate.getDate()]
                         .createSceneObject(context);
                     textSceneObject.position.x = xpos;
                     textSceneObject.position.y = -0.001;
                     this._dayObjects.push(textSceneObject);
 
-                    this.sceneObject.add(textSceneObject);
+                    this.add(textSceneObject);
                 }
             }
 
             this.currentLOD = LevelOfDetail.Days;
         }
 
-        setLOD(lod: LevelOfDetail) {
+        public setLOD(lod: LevelOfDetail) {
             if (this.currentLOD === lod) {
                 return;
             }
@@ -168,18 +193,14 @@ namespace MassiveTimeline {
             }
         }
 
-        convertDateToXPos(date: Date) {
-            const dayInMilliSeconds = 1000 * 60 * 60 * 24;
-            const dayStep = 1 / 365;
-
-            const howManyDays = Math.round((date.getTime() - this._firstTime.getTime()) / dayInMilliSeconds);
-            return howManyDays * dayStep - 1;
+        public convertDateToXPos(date: Date) {
+            return timespace.measureDateSpaceDistance(this._firstTime, date);
         }
 
-        addEvent(event: Event) {
+        public addEvent(event: Event) {
             let eventObj = new EventObject(event, this._events.length, this);
             this._events.push(eventObj);
-            this.sceneObject.add(eventObj);
+            this.add(eventObj);
         }
     } // TimeLine
 } // MassiveTimeline
