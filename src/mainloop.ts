@@ -55,7 +55,7 @@ namespace MassiveTimeline {
             this._screen_space_dim = screen_space_dim;
             this._state = ControlStates.VIEW;
 
-            this._camera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 1000, 1001);
+            this._camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 1000, 1001);
             this._renderer = new THREE.WebGLRenderer();
             this._renderer.setSize(screen_space_dim.x, screen_space_dim.y);
 
@@ -68,8 +68,9 @@ namespace MassiveTimeline {
             const orthoWidth = this._camera.right - this._camera.left;
             const orthoHeight = this._camera.top - this._camera.bottom;
 
-            const x = this._camera.position.x
-                + (event.clientX / this._screen_space_dim.x) * orthoWidth - this._camera.left;
+            const x = //this._camera.position.x
+            this._camera.left
+                + (event.clientX / this._screen_space_dim.x) * orthoWidth;
             const y = this._camera.position.y
                 + (event.clientY / this._screen_space_dim.y) * orthoHeight - this._camera.bottom;
 
@@ -107,8 +108,10 @@ namespace MassiveTimeline {
          */
         public mouseMove(event: MouseEvent) {
             if (this._state == ControlStates.PAN) {
-                const xmov = -event.movementX / this._screen_space_dim.x;
-                const ymov = event.movementY / this._screen_space_dim.y;
+                const cameraWidth = this._camera.right - this._camera.left;
+                const cameraHeight = this._camera.top - this._camera.bottom;
+                const xmov = (-event.movementX / this._screen_space_dim.x)*10;
+                const ymov = (event.movementY / this._screen_space_dim.y)*10;
                 const timelineDim = this._timeline.spaceDim;
 
                 this._camera.position.x = THREE.Math.clamp(this._camera.position.x + xmov,
@@ -129,18 +132,22 @@ namespace MassiveTimeline {
             console.log(event.clientX);
             let mx = (event.clientX / this.domElement.width) * 2 - 1;
             let my = -(event.clientY / this.domElement.height) * 2 + 1;
-            console.log('X: ' + mx + ' Y: ' + my);
+            //console.log('X: ' + mx + ' Y: ' + my);
 
             mx = (this.camera_space_dim.x*0.5)*mx;
             my = (this.camera_space_dim.y*0.5)*my;
-            console.log('mX: ' + mx + ' mY: ' + my);
+            //console.log('mX: ' + mx + ' mY: ' + my);
 
             console.log('cX: ' + this._camera.position.x + 'cY: ' + this._camera.position.y);
             if (event.wheelDelta > 0) {
                 this.setZoom(this._currentZoom + delta);
-            } else if (this._camera.right - this._camera.left < 10) {
+            } else if (this._camera.right - this._camera.left < 100) {
                 this.setZoom(this._currentZoom - delta);
             }
+
+            const mousePos = this.convertMousePositionToCameraSpace(event)
+            console.log(mousePos);
+            console.log(this._camera.position);
             //this._camera.position.x -= mx;
             //this._camera.position.y -= my;
 
@@ -156,8 +163,8 @@ namespace MassiveTimeline {
             if (value < 0.000005)
                 return ;
 
-            this._scene.scale.x = value;
-            this._scene.scale.y = value;
+            this._scene.scale.x = value*10;
+            this._scene.scale.y = value*10;
             this._currentZoom = value;
 
             let lod = LevelOfDetail.Days;
